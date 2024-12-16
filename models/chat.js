@@ -12,7 +12,7 @@ const MessageSchema = new mongoose.Schema({
   },
   ack: { type: Number, default: 0 },
   hasMedia: { type: Boolean, default: false },
-  body: { type: String, required: true },
+  body: { type: String },
   type: { type: String, required: true },
   timestamp: { type: Number, required: true },
   from: { type: String, required: true },
