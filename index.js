@@ -15,13 +15,6 @@ connectDB();
 const app = express();
 app.use(cors());
 app.use(express.json());
-app.use((req, res, next) => {
-    res.setHeader('Access-Control-Allow-Origin', '*'); // Atur asal yang diperbolehkan
-    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-    req.url = decodeURIComponent(req.url);
-    next();
-});
 
 app.listen(port, () => {
     console.log(`Backend menggunakan express di port ${port}`);
