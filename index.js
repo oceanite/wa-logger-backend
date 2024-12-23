@@ -2,6 +2,7 @@ const express = require("express");
 const cors = require("cors");
 const multer = require('multer');
 const path = require('path');
+const fs = require('fs');
 const connectDB = require('./config/db');
 const Message = require("./models/chat");
 const File = require("./models/media");
@@ -14,6 +15,13 @@ connectDB();
 const app = express();
 app.use(cors());
 app.use(express.json());
+app.use((req, res, next) => {
+    res.setHeader('Access-Control-Allow-Origin', '*'); // Atur asal yang diperbolehkan
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+    req.url = decodeURIComponent(req.url);
+    next();
+});
 
 app.listen(port, () => {
     console.log(`Backend menggunakan express di port ${port}`);
@@ -177,16 +185,25 @@ app.post("/api/send", async (req, res) => {
 
         // Validate required fields
         if (messageData.hasMedia){
-            if (!messageData.timestamp || !messageData.from || !messageData.to) {
-                return res.status(400).json({ error: 'Missing required fields' });
+            if ( !messageData.timestamp ){
+                return res.status(400).json({ error: 'Missing timestamp: hasMedia' });
+            } else if ( !messageData.from ){
+                return res.status(400).json({ error: 'Missing from: hasMedia' });
+            } else if ( !messageData.to ){
+                return res.status(400).json({ error: 'Missing to: hasMedia' });
             }
         } else {
-            if (!messageData.body || !messageData.timestamp || !messageData.from || !messageData.to) {
-                return res.status(400).json({ error: 'Missing required fields' });
+            if (!messageData.body){
+                return res.status(400).json({ error: 'Missing body' });
+            } else if ( !messageData.timestamp ){
+                return res.status(400).json({ error: 'Missing timestamp' });
+            } else if ( !messageData.from ){
+                return res.status(400).json({ error: 'Missing from' });
+            } else if ( !messageData.to ){
+                return res.status(400).json({ error: 'Missing to' });
             }
         }
         
-
         // Create a new message document
         const newMessage = new Message(messageData);
 
@@ -208,7 +225,7 @@ app.post("/api/send", async (req, res) => {
 // Endpoint untuk mengirim file
 app.post("/api/send-file", upload.array('files'), async (req, res) => {
     try {
-        const { chatroomID, timestamp } = req.body;
+        const { chatroomID, timestamp, total } = req.body;
         const key = `${chatroomID}_${timestamp}`;
 
         // Validate file
@@ -216,15 +233,17 @@ app.post("/api/send-file", upload.array('files'), async (req, res) => {
             return res.status(400).json({ error: 'No files uploaded' });
         }
 
-        const files = req.files.map(file => ({
+        const files = req.files.map((file, index) => ({
             filename: file.originalname,
-            updatedName: file.filename,
+            storedName: file.filename,
             path: `http://localhost:3003/uploads/${file.filename}`, // Menggunakan filename yang sudah diubah sebelumnya
             mimetype: file.mimetype,
             size: file.size,
             uploadedAt: timestamp,
             chatroomID: chatroomID,
-            mediaKey: key
+            mediaKey: key,
+            fileIndex: index,
+            indexTotal: total
         }));        
 
         await File.insertMany(files);
@@ -262,10 +281,22 @@ app.get("/api/files/:chatroomID", async (req, res) => {
 // Endpoint download file
 app.get('/download/:filename', (req, res) => {
     const file = path.join(__dirname, 'uploads', req.params.filename);
-    res.download(file, (err) => {
+    const newName = req.params.filename.split('-').slice(1).join('-');
+
+    // Cek apakah file ada sebelum mencoba untuk mengunduh
+    fs.access(file, fs.constants.F_OK, (err) => {
         if (err) {
-            res.status(500).send("Error downloading file.");
+            // Jika file tidak ditemukan, kirimkan respons error dan hentikan eksekusi lebih lanjut
+            return res.status(404).send("File not found.");
         }
+
+        // Kirimkan file jika ada
+        res.download(file, newName, (err) => {
+            if (err) {
+                // Jika ada kesalahan saat pengunduhan, kirimkan respons error dan hentikan eksekusi lebih lanjut
+                return res.status(500).send("Error downloading file.");
+            }
+        });
     });
 });
 
