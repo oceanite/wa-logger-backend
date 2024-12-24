@@ -3,6 +3,7 @@ const cors = require("cors");
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
+const mime = require('mime-types');
 const connectDB = require('./config/db');
 const Message = require("./models/chat");
 const File = require("./models/media");
@@ -18,6 +19,17 @@ app.use(express.json());
 
 app.listen(port, () => {
     console.log(`Backend menggunakan express di port ${port}`);
+});
+
+app.use('/uploads', (req, res, next) => {
+    const filePath = path.join(__dirname, 'uploads', req.path);
+    if (fs.existsSync(filePath)) {
+        const mimeType = mime.lookup(filePath);
+        if (mimeType) {
+            res.setHeader('Content-Type', mimeType);
+        }
+    }
+    next();
 });
 
 // Configure Multer to save files to a specific folder
