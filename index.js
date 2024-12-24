@@ -28,19 +28,6 @@ app.use((req, res, next) => {
   next();
 });
 
-app.use('/uploads', (req, res, next) => {
-    const filePath = path.join(__dirname, 'uploads', req.path);
-    if (fs.existsSync(filePath)) {
-        const mimeType = mime.lookup(filePath);
-        if (mimeType) {
-            res.setHeader('Content-Type', mimeType);
-        } else {
-            res.setHeader('Content-Type', 'application/octet-stream'); // Default untuk file yang tidak dikenali
-        }
-    }
-    next();
-});
-
 // Configure Multer to save files to a specific folder
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
@@ -54,6 +41,20 @@ const upload = multer({ storage });
 
 // Menyajikan folder uploads sebagai file statis
 app.use('/uploads', express.static('uploads'));
+
+app.use('/uploads', (req, res, next) => {
+    const filePath = path.join(__dirname, 'uploads', req.path);
+    console.log(filePath);
+    if (fs.existsSync(filePath)) {
+        const mimeType = mime.lookup(filePath);
+        if (mimeType) {
+            res.setHeader('Content-Type', mimeType);
+        } else {
+            res.setHeader('Content-Type', 'application/octet-stream'); // Default untuk file yang tidak dikenali
+        }
+    }
+    next();
+});
 
 app.get("/api/contacts", async (req, res) => {
     try {
@@ -295,6 +296,7 @@ app.get("/api/files/:chatroomID", async (req, res) => {
 // Endpoint download file
 app.get('/download/:filename', (req, res) => {
     const file = path.join(__dirname, 'uploads', req.params.filename);
+    console.log(file);
     const newName = req.params.filename.split('-').slice(1).join('-');
 
     // Cek apakah file ada sebelum mencoba untuk mengunduh
