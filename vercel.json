@@ -25,7 +25,7 @@
     {
       "source": "/uploads/(.*)",
       "headers": [
-        { "key": "Content-Type", "value": "image/jpeg" }
+        { "key": "X-Content-Type-Options", "value": "nosniff" }
       ]
     }
   ]
