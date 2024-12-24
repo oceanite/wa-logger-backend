@@ -275,7 +275,7 @@ app.post("/api/send-file", upload.array('files'), async (req, res) => {
     }
 });
 
-// Endpoint untuk mengambil file dari database
+// Endpoint untuk mengambil metadata file dari database
 app.get("/api/files/:chatroomID", async (req, res) => {
     try {
         const { chatroomID } = req.params;
@@ -291,6 +291,27 @@ app.get("/api/files/:chatroomID", async (req, res) => {
         console.error('Error fetching files:', error);
         res.status(500).json({ error: 'Internal Server Error' });
     }
+});
+
+// Endpoint untuk menampilkan gambar
+app.get("/api/images/:filename", (req, res) => {
+    const { filename } = req.params;
+    const filePath = path.join(__dirname, 'uploads', filename);
+
+    // Cek apakah file ada
+    fs.access(filePath, fs.constants.F_OK, (err) => {
+        if (err) {
+            // Jika file tidak ditemukan, kirimkan respons error 404
+            return res.status(404).json({ message: "Image not found" });
+        }
+
+        // Tentukan jenis konten gambar
+        const mimeType = mime.lookup(filePath);
+        res.setHeader('Content-Type', mimeType || 'application/octet-stream');
+        
+        // Kirimkan file gambar
+        res.sendFile(filePath);
+    });
 });
 
 // Endpoint download file
