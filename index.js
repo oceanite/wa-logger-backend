@@ -14,7 +14,9 @@ const port = 3003;
 connectDB();
 
 const app = express();
-app.use(cors());
+app.use(cors({
+  origin: '*', // Izinkan dari semua domain (atau tentukan domain frontend Anda)
+}));
 app.use(express.json());
 
 app.listen(port, () => {
