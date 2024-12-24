@@ -25,6 +25,7 @@ app.listen(port, () => {
 
 app.use((req, res, next) => {
   res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader("Content-Security-Policy", "default-src 'self'; font-src 'self' chrome-extension://*");
   next();
 });
 
