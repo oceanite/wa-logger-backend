@@ -298,6 +298,7 @@ app.get("/api/files/:chatroomID", async (req, res) => {
 app.get("/api/images/:filename", (req, res) => {
     const { filename } = req.params;
     const filePath = path.join(__dirname, 'uploads', filename);
+    console.log(filePath);
 
     // Cek apakah file ada
     fs.access(filePath, fs.constants.F_OK, (err) => {
