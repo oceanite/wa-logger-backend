@@ -27,6 +27,8 @@ app.use('/uploads', (req, res, next) => {
         const mimeType = mime.lookup(filePath);
         if (mimeType) {
             res.setHeader('Content-Type', mimeType);
+        } else {
+            res.setHeader('Content-Type', 'application/octet-stream'); // Default untuk file yang tidak dikenali
         }
     }
     next();
