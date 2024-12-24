@@ -17,5 +17,16 @@
         "source": "uploads",
         "destination": "/uploads"
       }
-    ]
-  }
+    ],
+    "rewrites": [
+    { "source": "/uploads/(.*)", "destination": "/api/uploads/$1" }
+  ],
+  "headers": [
+    {
+      "source": "/uploads/(.*)",
+      "headers": [
+        { "key": "Content-Type", "value": "image/jpeg" }
+      ]
+    }
+  ]
+}
