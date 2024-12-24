@@ -23,6 +23,11 @@ app.listen(port, () => {
     console.log(`Backend menggunakan express di port ${port}`);
 });
 
+app.use((req, res, next) => {
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  next();
+});
+
 app.use('/uploads', (req, res, next) => {
     const filePath = path.join(__dirname, 'uploads', req.path);
     if (fs.existsSync(filePath)) {
