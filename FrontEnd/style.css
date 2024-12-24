@@ -1,0 +1,446 @@
+body, html {
+    height: 100%;
+    background-color: #253633;
+}
+
+h3 {
+    font-weight: bold;
+}
+
+.chat-sidebar {
+    height: 100vh;
+    border-right: 1px solid #092E28;
+    background-color: #1d3d38;
+    overflow-y: auto;
+}
+
+.contact-name {
+    font-weight: 500;
+}
+
+.row {
+    overflow: hidden;
+}
+
+.message-preview {
+    color: #B3CBC5;
+    overflow: hidden;
+    display: block;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    max-width: calc(100% - 10px);
+}
+
+.chat-main {
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    background-color: #253633;
+}
+
+.chat-header {
+    padding: 15px;
+    background-color: #224C45;
+    display: flex;
+    align-items: center;
+    border-bottom: 1px solid #092E28;
+    filter: drop-shadow(0px 4px 8px #00000030);
+}
+
+.chat-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px;
+    background-color: #253633;
+}
+
+.chat-input {
+    height: auto;
+    padding: 12px 15px;
+    background-color: #224C45; /* Background color for chat input */
+    border-top: 1px solid #092E28;
+    display: flex;
+    align-items: center;
+    gap: 10px; /* Space between the input and button */
+    transition: height 0.2s ease;
+    overflow: hidden;
+}
+
+.message-input {
+    resize: none; /* Prevent manual resizing */
+    overflow-y: auto; /* Allow vertical scrolling if content overflows */
+    max-height: 140px;
+    border-radius: 24px;
+    border: none;
+    padding: 10px 16px;
+    font-size: 16px;
+    background-color: #315952;
+    color: #e2f6f3;
+}
+
+.message-input::placeholder {
+    color: #6d918b;
+}
+
+.message-input:focus {
+    outline: none;
+    box-shadow: none;
+    background-color: #315952;
+    color: #e2f6f3;
+}
+
+.btn-send {
+    height: auto;
+    background-color: #1d7667;
+    border: none;
+    padding: 13.25px 18px;
+    border-radius: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn-send i {
+    font-size: 19px;
+    color: white;
+}
+
+.btn-send:hover {
+    background-color: #21987d;
+}
+
+.btn-send:active {
+    background-color: #1f8069;
+}
+
+.btn-add-media {
+    height: auto;
+    background-color: transparent;
+    border: none;
+    padding: 10px 10px;
+    border-radius: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn-add-media i {
+    font-size: 24px;
+    color: white;
+}
+
+.btn-add-media:hover {
+    background-color: transparent;
+}
+
+.btn-add-media:active {
+    background-color: transparent;
+}
+
+.search-contact {
+    margin-top: 16px;
+    margin-bottom: 10px;
+    background-color: #395751;
+    border: none;
+    border-radius: 24px;
+    padding: 10px 10px 10px 21px;
+    color: #e2f6f3;
+}
+
+.search-contact::placeholder {
+    color: #9fc4be;
+}
+
+.search-contact:focus {
+    background-color: #4b6862;
+    outline: none;
+    box-shadow: none;
+    color: #e2f6f3;
+}
+
+.search-message {
+    background-color: #315952;
+    border: none;
+    border-radius: 24px;
+    padding: 10px 10px 10px 21px;
+    width: 200px;
+    color: #e2f6f3;
+}
+
+.search-message::placeholder {
+    color: #6d918b;
+}
+
+.search-message:focus {
+    background-color: #416d66;
+    outline: none;
+    box-shadow: none;
+    color: #e2f6f3;
+}
+
+.settings-icon {
+    padding-left: 8px;
+}
+
+.chat-header .settings-icon {
+    color: white;
+    font-size: 24px;
+    cursor: pointer;
+}
+
+.last-time {
+    color: #B3CBC6;
+    font-size: 13.6px;
+    margin-top: auto;
+    white-space: nowrap;
+    display: inline-block;
+}
+
+.list-group-item {
+    background-color: #315952;
+    color: white;
+    border-bottom: 1px solid #092E28;
+    display: flex;
+    align-items: center;
+    overflow: hidden;
+}
+
+.list-group-item:hover {
+    background-color: #2d514b;
+    color: white;
+    border-bottom: 1px solid #092E28;
+}
+
+.contact-list.selected {
+    background-color: #1B463F;
+    color: white;
+    border-bottom: 1px solid #092E28;
+}
+
+.profile-pic {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    margin-right: 12px;
+    background-color: #CCC;
+}
+
+.profile-chat {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    margin-right: 8px;
+    background-color: #CCC;
+}
+
+.notify-name {
+    font-size: 16px;
+    color: white;
+    margin-bottom: 4px;
+}
+
+.message {
+    margin-bottom: 10px;
+    width: fit-content;
+}
+
+.message.received {
+    max-width: calc(100% - 300px);
+    width: fit-content;
+}
+
+.message.sent {
+    max-width: calc(100% - 300px);
+    margin-left: auto;
+    width: fit-content;
+}
+
+.message-bubble {
+    position: relative;
+    padding: 4px 4px 20px 4px;
+    min-width: 100px;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    text-align: left;
+}
+
+.message-body {
+    margin-left: 8px;
+    margin-right: 8px;
+}
+
+.quoted-message {
+    padding: 4px 4px 4px 8px;
+    border-radius: 10px;
+    border-left: 6px solid #1DA1F2;
+    background-color: rgb(47, 73, 68, 0.6);
+    text-overflow: ellipsis;
+}
+
+.quoted-message .notify-name {
+    color: #1DA1F2;
+    margin-bottom: 0px;
+}
+
+.message.sent .message-bubble {
+    background-color: #287464;
+    color: white;
+    border-radius: 10px 0 10px 10px;
+    float: right;
+}
+
+.message.received .message-bubble {
+    background-color: #005C4B;
+    color: white;
+    border-radius: 0 10px 10px 10px;
+}
+
+.timestamp {
+    position: absolute;
+    bottom: 4px;
+    right: 8px;
+    font-size: 12px;
+    color: #B3CBC6;
+}
+
+.time-separator {
+    color: #6d807d;
+    font-size: 16px;
+}
+
+.file-preview {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%); /* Untuk mengatur agar elemen benar-benar di tengah */
+    z-index: 1000;       /* Pastikan z-index lebih besar dari elemen lainnya */
+    background: #253633;   /* Tambahkan background putih agar konten di bawahnya tidak terlihat */
+    border: 1px solid #222d2b;
+    border-radius: 12px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    height: 90%;
+    max-width: 1100px;
+}
+
+.btn-clear-preview {
+    background-color: rgb(0, 0, 0, 0);
+    border-color: rgb(0, 0, 0, 0);
+    border-radius: 12px 0 0 0;
+}
+
+.preview-container {
+    height: 310px;
+}
+
+.file-list {
+    gap: 12px;
+    margin-left: 10px;
+    margin-top: 10px;
+    width: 800px;
+    overflow-x: auto; 
+    overflow-y: hidden;
+    white-space: nowrap;
+}
+
+.btn-send-file {
+    width: 90px;
+    height: 90px;
+    border-radius: 50%;
+    margin-top: 10px;
+    background-color: #1d7667;
+}
+
+.btn-send-file i {
+    font-size: 28px;
+    color: white;
+}
+
+.file-thumbnail {
+    width: 100px;
+    height: 100px;
+    min-width: 100px;
+    min-height: 100px;
+}
+
+.file-name, .file-size {
+    text-align: center;
+    margin: 10px 0;
+    color: white;
+}
+
+.file-icon{
+    font-size: 80px;
+    margin: 10px 0;
+    color: white;
+}
+
+.caption-input {
+    resize: none; /* Prevent manual resizing */
+    overflow-y: auto; /* Allow vertical scrolling if content overflows */
+    height: 60px;
+    width: 140vh;
+    border-radius: 8px;
+    border: none;
+    margin-top: 20px;
+    margin-bottom: 20px;
+    padding: 10px 16px;
+    font-size: 16px;
+    color: #e2f6f3;
+    background-color: #315952;
+    align-items: center;
+}
+.caption-input::placeholder {
+    color: #6d918b;
+}
+
+.caption-input:focus {
+    outline: none;
+    box-shadow: none;
+    background-color: #315952;
+    color: #e2f6f3;
+    align-items: center;
+}
+
+.image-bubble, .video-bubble {
+    height: auto;
+    max-width: 100%;
+    max-height: 500px;
+    border-radius: 10px;
+}
+
+.overlay-video {
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+    background: linear-gradient(transparent, rgba(0, 0, 0, 0.7));
+    color: white;
+    padding: 5px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 12px;
+}
+
+.play-overlay {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 30px;
+    font-weight: bold;
+    color: white;
+    background-color: rgba(0, 0, 0, 0.6);
+    border-radius: 50%;
+    padding: 8px 12px;
+}
+
+.media-content {
+    background-color: rgb(47, 73, 68, 0.6);
+    border-radius: 10px;
+    width: fit-content;
+}
+
+.file-content-icon {
+    background-color: rgb(47, 73, 68, 0.6);
+    border-radius: 10px;
+}
