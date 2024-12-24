@@ -19,14 +19,14 @@
       }
     ],
     "rewrites": [
-    { "source": "/uploads/(.*)", "destination": "/api/uploads/$1" }
-  ],
-  "headers": [
-    {
-      "source": "/uploads/(.*)",
-      "headers": [
-        { "key": "X-Content-Type-Options", "value": "nosniff" }
-      ]
-    }
-  ]
-}
+      { "source": "/uploads/(.*)", "destination": "/api/uploads/$1" }
+    ],
+    "headers": [
+      {
+        "source": "/uploads/(.*)",
+        "headers": [
+          { "key": "X-Content-Type-Options", "value": "nosniff" }
+        ]
+      }
+    ]
+  }
