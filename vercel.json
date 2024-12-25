@@ -12,22 +12,11 @@
         "dest": "index.js"
       }
     ],
-    "static": [
-      {
-        "source": "uploads",
-        "destination": "/uploads"
+    "functions": {
+      "api/*.js": {
+        "runtime": "nodejs18.x",
+        "memory": 512,
+        "maxDuration": 10
       }
-    ],
-    "rewrites": [
-      { "source": "/uploads/(.*)", "destination": "/uploads/$1" }
-    ],
-    "headers": [
-      {
-        "source": "/uploads/(.*)",
-        "headers": [
-          { "key": "Content-Type", "value": "image/jpeg" },
-          { "key": "X-Content-Type-Options", "value": "nosniff" }
-        ]
-      }
-    ]
+    }
   }
