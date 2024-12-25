@@ -1,9 +1,6 @@
 const express = require("express");
 const cors = require("cors");
-const multer = require('multer');
-const path = require('path');
-const fs = require('fs');
-const mime = require('mime-types');
+const axios = require('axios');
 const connectDB = require('./config/db');
 const Message = require("./models/chat");
 const File = require("./models/media");
@@ -27,34 +24,6 @@ app.use((req, res, next) => {
   res.setHeader('X-Content-Type-Options', 'nosniff');
   res.setHeader("Content-Security-Policy", "default-src 'self'; font-src 'self' chrome-extension://*");
   next();
-});
-
-// Configure Multer to save files to a specific folder
-const storage = multer.diskStorage({
-    destination: (req, file, cb) => {
-        cb(null, path.join(__dirname, "uploads")); // Folder tempat menyimpan file
-    },
-    filename: (req, file, cb) => {
-        cb(null, Date.now() + "-" + file.originalname); // Penamaan unik file
-    },
-});
-const upload = multer({ storage });
-
-// Menyajikan folder uploads sebagai file statis
-app.use('/uploads', express.static('uploads'));
-
-app.use('/uploads', (req, res, next) => {
-    const filePath = path.join(__dirname, 'uploads', req.path);
-    console.log(filePath);
-    if (fs.existsSync(filePath)) {
-        const mimeType = mime.lookup(filePath);
-        if (mimeType) {
-            res.setHeader('Content-Type', mimeType);
-        } else {
-            res.setHeader('Content-Type', 'application/octet-stream'); // Default untuk file yang tidak dikenali
-        }
-    }
-    next();
 });
 
 app.get("/api/contacts", async (req, res) => {
@@ -238,105 +207,91 @@ app.post("/api/send", async (req, res) => {
     }
 });
 
-// Endpoint untuk mengirim file
-app.post("/api/send-file", upload.array('files'), async (req, res) => {
+// Endpoint untuk mengirim metadata file ke mongodb
+app.post("/api/send-file", async (req, res) => {
     try {
-        const { chatroomID, timestamp, total } = req.body;
+        const { chatroomID, timestamp, total, files } = req.body;
         const key = `${chatroomID}_${timestamp}`;
+        const uploadedFiles = [];
 
-        // Validate file
-        if (!req.files || req.files.length === 0) {
-            return res.status(400).json({ error: 'No files uploaded' });
+        // Validate metadata file
+        if (!files || files.length === 0) {
+            return res.status(400).json({ error: 'No files metadata provided' });
         }
 
-        const files = req.files.map((file, index) => ({
-            filename: file.originalname,
-            storedName: file.filename,
-            path: `https://wa-logger-back.vercel.app/uploads/${file.filename}`, // Menggunakan filename yang sudah diubah sebelumnya
-            mimetype: file.mimetype,
-            size: file.size,
-            uploadedAt: timestamp,
-            chatroomID: chatroomID,
-            mediaKey: key,
-            fileIndex: index,
-            indexTotal: total
-        }));        
+        for (const [index, file] of files.entries()) {
+            const { filename, content, mimetype, size } = file;
+            const fileStoredName = `${Date.now()}_${filename}`;
 
-        await File.insertMany(files);
+            // Upload file to github repo
+            const githubPath = `uploads/${storedName}`;
+            const githubResponse = await axios.put(
+                `https://api.github.com/repos/oceanite/wa-logger-backend/contents/${githubPath}`,
+                {
+                    message: `Upload file ${storedName}`,
+                    content: Buffer.from(content, 'base64').toString('base64'),
+                },
+                {
+                    headers: {
+                        Authorization: "Bearer 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",
+                    },
+                }
+            );
+
+            const githubFilePath = githubResponse.data.content.download_url;
+
+            uploadedFiles.push({
+                filename: filename,
+                storedName: fileStoredName,
+                path: githubFilePath,
+                mimetype: mimetype,
+                size: size,
+                uploadedAt: timestamp,
+                chatroomID: chatroomID,
+                mediaKey: key,
+                fileIndex: index,
+                indexTotal: total
+            });
+
+        }        
+
+        await File.insertMany(uploadedFiles);
 
         // Send success response
         res.status(201).json({
             success: true,
-            message: 'Files uploaded successfully',
-            data: files
+            message: 'Files uploaded to repo and metadata processed successfully',
+            data: uploadedFiles
         });
     } catch (error) {
-        console.error('Error uploading files:', error);
+        console.error('Error uploading and processing file metadata:', error);
         res.status(500).json({ error: 'Internal Server Error' });
     }
-});
-
-// Endpoint untuk mengambil metadata file dari database
-app.get("/api/files/:chatroomID", async (req, res) => {
-    try {
-        const { chatroomID } = req.params;
-
-        const files = await File.find({ chatroomID }).sort({ "uploadedAt": 1 });;
-
-        if (files.length === 0) {
-            return res.status(404).json({ message: "No files found for this chatroom" });
-        }
-
-        res.status(200).json(files);
-    } catch {
-        console.error('Error fetching files:', error);
-        res.status(500).json({ error: 'Internal Server Error' });
-    }
-});
-
-// Endpoint untuk menampilkan gambar
-app.get("/api/images/:filename", (req, res) => {
-    const { filename } = req.params;
-    const filePath = path.join(__dirname, 'uploads', filename);
-    console.log(filePath);
-
-    // Cek apakah file ada
-    fs.access(filePath, fs.constants.F_OK, (err) => {
-        if (err) {
-            // Jika file tidak ditemukan, kirimkan respons error 404
-            return res.status(404).json({ message: "Image not found" });
-        }
-
-        // Tentukan jenis konten gambar
-        const mimeType = mime.lookup(filePath);
-        res.setHeader('Content-Type', mimeType || 'application/octet-stream');
-        
-        // Kirimkan file gambar
-        res.sendFile(filePath);
-    });
 });
 
 // Endpoint download file
 app.get('/download/:filename', (req, res) => {
-    const file = path.join(__dirname, 'uploads', req.params.filename);
-    console.log(file);
-    const newName = req.params.filename.split('-').slice(1).join('-');
+    const filename = req.params.filename;
+    const newName = filename.split('-').slice(1).join('-');
+    const githubURL = `https://raw.githubusercontent.com/oceanite/wa-logger-backend/main/uploads/${filename}`;
 
-    // Cek apakah file ada sebelum mencoba untuk mengunduh
-    fs.access(file, fs.constants.F_OK, (err) => {
-        if (err) {
-            // Jika file tidak ditemukan, kirimkan respons error dan hentikan eksekusi lebih lanjut
-            return res.status(404).send("File not found.");
+    try {
+        // Ambil file dari github
+        const response = await axios.get(githubURL, { responseType: 'arraybuffer' });
+
+        // Kirim file ke klien
+        res.setHeader('Content-Disposition', `attachment; filename="${newName}"`);
+        res.setHeader('Content-Type', response.headers['content-type']);
+        res.send(response.data);
+    } catch (error) {
+        console.error('Error downloading file:', error);
+
+        if (error.response && error.response.status === 404) {
+            return res.status(404).send('File not found on GitHub.');
         }
 
-        // Kirimkan file jika ada
-        res.download(file, newName, (err) => {
-            if (err) {
-                // Jika ada kesalahan saat pengunduhan, kirimkan respons error dan hentikan eksekusi lebih lanjut
-                return res.status(500).send("Error downloading file.");
-            }
-        });
-    });
+        res.status(500).send('Error downloading file.');
+    }
 });
 
 module.exports = app;
