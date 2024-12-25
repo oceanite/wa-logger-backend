@@ -14,10 +14,32 @@ connectDB();
 const app = express();
 
 app.use(cors({
-  origin: '*', // Izinkan dari semua domain
+    origin: '*',
+    methods: ['GET', 'POST', 'PUT', 'DELETE'],
+    allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
 app.use(express.json());
+
+app.use((req, res, next) => {
+    if (req.headers['content-type'] === 'application/json') {
+        let data = '';
+        req.on('data', chunk => {
+            data += chunk;
+        });
+        req.on('end', () => {
+            try {
+                req.body = JSON.parse(data);
+            } catch (error) {
+                console.error("Error parsing JSON:", error);
+                return res.status(400).json({ error: "Invalid JSON format" });
+            }
+            next();
+        });
+    } else {
+        next();
+    }
+});
 
 app.listen(port, () => {
     console.log(`Backend menggunakan express di port ${port}`);
