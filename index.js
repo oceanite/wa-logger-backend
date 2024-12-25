@@ -207,7 +207,7 @@ app.post("/api/send", async (req, res) => {
     }
 });
 
-// Endpoint untuk mengirim metadata file ke mongodb
+// Endpoint untuk mengirim metadata file ke mongodb dan upload data ke repo github
 app.post("/api/send-file", async (req, res) => {
     try {
         const { chatroomID, timestamp, total, files } = req.body;
