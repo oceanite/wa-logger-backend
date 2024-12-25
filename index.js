@@ -1,7 +1,6 @@
 const express = require("express");
 const cors = require("cors");
 const axios = require('axios');
-const multer = require('multer');
 const connectDB = require('./config/db');
 const Message = require("./models/chat");
 const File = require("./models/media");
