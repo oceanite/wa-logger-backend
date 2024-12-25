@@ -269,9 +269,16 @@ app.post("/api/send-file", upload.array('files'), async (req, res) => {
             data: uploadedFiles,
         });
     } catch (error) {
-        console.error('Error uploading and processing file metadata:', error);
-        res.status(500).json({ error: 'Internal Server Error' });
+        if (error.response) {
+            console.error('Error Response:', error.response.data);
+            console.error('Error Status:', error.response.status);
+            console.error('Error Headers:', error.response.headers);
+        } else {
+            console.error('Error Message:', error.message);
+        }
+            res.status(500).json({ error: 'Internal Server Error' });
     }
+
 });
 
 // Endpoint download file
