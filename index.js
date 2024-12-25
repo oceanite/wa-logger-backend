@@ -8,6 +8,7 @@ const File = require("./models/media");
 const Contact = require("./models/contact")
 const { default: mongoose } = require("mongoose");
 const port = 3003;
+const TOKEN_ACCESS = "TlGZopTbO716Qb0Sp3kdRd2bkhtjx92L1roc";
 
 connectDB();
 
@@ -22,9 +23,9 @@ app.listen(port, () => {
 });
 
 app.use((req, res, next) => {
-  res.setHeader('X-Content-Type-Options', 'nosniff');
-  res.setHeader("Content-Security-Policy", "default-src 'self'; font-src 'self' chrome-extension://*");
-  next();
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader("Content-Security-Policy", "default-src 'self'; font-src 'self' chrome-extension://*");
+    next();
 });
 
 const upload = multer({ storage: multer.memoryStorage() }); // Simpan file di memori sementara
@@ -219,10 +220,12 @@ app.post("/api/send-file", upload.array('files'), async (req, res) => {
 
         // Validasi file
         if (!req.files || req.files.length === 0) {
+            console.error("No files metadata provided");
             return res.status(400).json({ error: 'No files provided' });
         }
 
         for (const [index, file] of req.files.entries()) {
+            console.log("Processing file:", file.filename);
             const fileStoredName = `${Date.now()}_${file.originalname}`;
 
             // Upload file ke GitHub
@@ -235,10 +238,11 @@ app.post("/api/send-file", upload.array('files'), async (req, res) => {
                 },
                 {
                     headers: {
-                        Authorization: "Bearer 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",
+                        Authorization: `Bearer ghp_${TOKEN_ACCESS}`,
                     },
                 }
             );
+            console.log("GitHub API response:", githubResponse.data);
 
             const githubFilePath = githubResponse.data.content.download_url;
 
@@ -271,7 +275,7 @@ app.post("/api/send-file", upload.array('files'), async (req, res) => {
 });
 
 // Endpoint download file
-app.get('/download/:filename', (req, res) => {
+app.get('/download/:filename', async (req, res) => {
     const filename = req.params.filename;
     const newName = filename.split('-').slice(1).join('-');
     const githubURL = `https://raw.githubusercontent.com/oceanite/wa-logger-backend/main/uploads/${filename}`;
