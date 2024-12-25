@@ -13,22 +13,16 @@ const TOKEN_ACCESS = "TlGZopTbO716Qb0Sp3kdRd2bkhtjx92L1roc";
 connectDB();
 
 const app = express();
+
 app.use(cors({
-  origin: '*', // Izinkan dari semua domain (atau tentukan domain frontend Anda)
+  origin: '*', // Izinkan dari semua domain
 }));
+
 app.use(express.json());
 
 app.listen(port, () => {
     console.log(`Backend menggunakan express di port ${port}`);
 });
-
-app.use((req, res, next) => {
-    res.setHeader('X-Content-Type-Options', 'nosniff');
-    res.setHeader("Content-Security-Policy", "default-src 'self'; font-src 'self' chrome-extension://*");
-    next();
-});
-
-const upload = multer({ storage: multer.memoryStorage() }); // Simpan file di memori sementara
 
 app.get("/api/contacts", async (req, res) => {
     try {
@@ -212,16 +206,17 @@ app.post("/api/send", async (req, res) => {
 });
 
 // Endpoint untuk mengirim metadata file ke MongoDB dan upload data ke repo GitHub
-app.post("/api/send-file", upload.array('files'), async (req, res) => {
+app.post("/api/send-file", async (req, res) => {
     try {
+        console.log("Request body:", req.body); // Log request body untuk debug
         const { chatroomID, timestamp, total, files } = req.body;
         const key = `${chatroomID}_${timestamp}`;
         const uploadedFiles = [];
 
         // Validasi file
-        if (!req.files || req.files.length === 0) {
-            console.error("No files provided");
-            return res.status(400).json({ error: 'No files provided' });
+        if (!files || files.length === 0) {
+            console.error("No files uploaded");
+            return res.status(400).json({ error: "No files uploaded" });
         }
 
         for (const file of files) {
