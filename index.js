@@ -214,11 +214,11 @@ app.post("/api/send-file", async (req, res) => {
         const uploadedFiles = [];
 
         // Validasi file
-        if (!files || files.length <= 0) {
-            console.error("No files uploaded");
+        if (!Array.isArray(files) || files.length <= 0) {
+            console.error("Invalid files data:", files);
             return res.status(400).json({ 
                 error: "No files uploaded", 
-                receivedFiles: files // Sertakan isi dari `files`
+                receivedFiles: files
             });
         }
 
