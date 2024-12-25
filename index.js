@@ -1,6 +1,7 @@
 const express = require("express");
 const cors = require("cors");
 const axios = require('axios');
+const multer = require('multer');
 const connectDB = require('./config/db');
 const Message = require("./models/chat");
 const File = require("./models/media");
@@ -25,6 +26,8 @@ app.use((req, res, next) => {
   res.setHeader("Content-Security-Policy", "default-src 'self'; font-src 'self' chrome-extension://*");
   next();
 });
+
+const upload = multer({ storage: multer.memoryStorage() }); // Simpan file di memori sementara
 
 app.get("/api/contacts", async (req, res) => {
     try {
@@ -207,29 +210,28 @@ app.post("/api/send", async (req, res) => {
     }
 });
 
-// Endpoint untuk mengirim metadata file ke mongodb dan upload data ke repo github
-app.post("/api/send-file", async (req, res) => {
+// Endpoint untuk mengirim metadata file ke MongoDB dan upload data ke repo GitHub
+app.post("/api/send-file", upload.array('files'), async (req, res) => {
     try {
-        const { chatroomID, timestamp, total, files } = req.body;
+        const { chatroomID, timestamp, total } = req.body;
         const key = `${chatroomID}_${timestamp}`;
         const uploadedFiles = [];
 
-        // Validate metadata file
-        if (!files || files.length === 0) {
-            return res.status(400).json({ error: 'No files metadata provided' });
+        // Validasi file
+        if (!req.files || req.files.length === 0) {
+            return res.status(400).json({ error: 'No files provided' });
         }
 
-        for (const [index, file] of files.entries()) {
-            const { filename, content, mimetype, size } = file;
-            const fileStoredName = `${Date.now()}_${filename}`;
+        for (const [index, file] of req.files.entries()) {
+            const fileStoredName = `${Date.now()}_${file.originalname}`;
 
-            // Upload file to github repo
-            const githubPath = `uploads/${storedName}`;
+            // Upload file ke GitHub
+            const githubPath = `uploads/${fileStoredName}`;
             const githubResponse = await axios.put(
                 `https://api.github.com/repos/oceanite/wa-logger-backend/contents/${githubPath}`,
                 {
-                    message: `Upload file ${storedName}`,
-                    content: Buffer.from(content, 'base64').toString('base64'),
+                    message: `Upload file ${fileStoredName}`,
+                    content: file.buffer.toString('base64'),
                 },
                 {
                     headers: {
@@ -241,27 +243,26 @@ app.post("/api/send-file", async (req, res) => {
             const githubFilePath = githubResponse.data.content.download_url;
 
             uploadedFiles.push({
-                filename: filename,
+                filename: file.originalname,
                 storedName: fileStoredName,
                 path: githubFilePath,
-                mimetype: mimetype,
-                size: size,
+                mimetype: file.mimetype,
+                size: file.size,
                 uploadedAt: timestamp,
                 chatroomID: chatroomID,
                 mediaKey: key,
                 fileIndex: index,
                 indexTotal: total
             });
+        }
 
-        }        
-
+        // Simpan metadata ke MongoDB
         await File.insertMany(uploadedFiles);
 
-        // Send success response
         res.status(201).json({
             success: true,
             message: 'Files uploaded to repo and metadata processed successfully',
-            data: uploadedFiles
+            data: uploadedFiles,
         });
     } catch (error) {
         console.error('Error uploading and processing file metadata:', error);
