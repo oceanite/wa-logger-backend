@@ -212,6 +212,7 @@ app.post("/api/send-file", async (req, res) => {
         const { chatroomID, timestamp, total, files } = req.body;
         const key = `${chatroomID}_${timestamp}`;
         const uploadedFiles = [];
+        let index = 0;
 
         // Validasi file
         if (!Array.isArray(files) || files.length <= 0) {
@@ -226,7 +227,7 @@ app.post("/api/send-file", async (req, res) => {
             console.log("Processing file:", file.filename);
             const { filename, content, mimetype, size } = file;
             const fileBuffer = Buffer.from(content, 'base64');
-            const fileStoredName = `${Date.now()}_${file.originalname}`;
+            const fileStoredName = `${Date.now()}_${filename}`;
 
             // Upload file ke GitHub
             const githubPath = `uploads/${fileStoredName}`;
@@ -258,6 +259,8 @@ app.post("/api/send-file", async (req, res) => {
                 fileIndex: index,
                 indexTotal: total
             });
+            
+            index++;
         }
 
         // Simpan metadata ke MongoDB
