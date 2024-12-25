@@ -214,18 +214,20 @@ app.post("/api/send", async (req, res) => {
 // Endpoint untuk mengirim metadata file ke MongoDB dan upload data ke repo GitHub
 app.post("/api/send-file", upload.array('files'), async (req, res) => {
     try {
-        const { chatroomID, timestamp, total } = req.body;
+        const { chatroomID, timestamp, total, files } = req.body;
         const key = `${chatroomID}_${timestamp}`;
         const uploadedFiles = [];
 
         // Validasi file
         if (!req.files || req.files.length === 0) {
-            console.error("No files metadata provided");
+            console.error("No files provided");
             return res.status(400).json({ error: 'No files provided' });
         }
 
-        for (const [index, file] of req.files.entries()) {
+        for (const file of files) {
             console.log("Processing file:", file.filename);
+            const { filename, content, mimetype, size } = file;
+            const fileBuffer = Buffer.from(content, 'base64');
             const fileStoredName = `${Date.now()}_${file.originalname}`;
 
             // Upload file ke GitHub
@@ -234,7 +236,7 @@ app.post("/api/send-file", upload.array('files'), async (req, res) => {
                 `https://api.github.com/repos/oceanite/wa-logger-backend/contents/${githubPath}`,
                 {
                     message: `Upload file ${fileStoredName}`,
-                    content: file.buffer.toString('base64'),
+                    content: fileBuffer.toString('base64'),
                 },
                 {
                     headers: {
@@ -247,11 +249,11 @@ app.post("/api/send-file", upload.array('files'), async (req, res) => {
             const githubFilePath = githubResponse.data.content.download_url;
 
             uploadedFiles.push({
-                filename: file.originalname,
+                filename: filename,
                 storedName: fileStoredName,
                 path: githubFilePath,
-                mimetype: file.mimetype,
-                size: file.size,
+                mimetype: mimetype,
+                size: size,
                 uploadedAt: timestamp,
                 chatroomID: chatroomID,
                 mediaKey: key,
