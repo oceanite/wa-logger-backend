@@ -228,9 +228,74 @@ app.post("/api/send", async (req, res) => {
 
 // Endpoint untuk mengirim metadata file ke MongoDB dan upload data ke repo GitHub
 app.post("/api/send-file", async (req, res) => {
-    console.log("Headers:", req.headers);
-    console.log("Body parsed:", req.body);
-    res.json(req.body); // Sementara untuk melihat hasil body
+    try {
+        console.log("Request body:", req.body); // Log request body untuk debug
+        const { chatroomID, timestamp, total, files } = req.body;
+        const key = `${chatroomID}_${timestamp}`;
+        const uploadedFiles = [];
+        let index = 0;
+
+        // Validasi file
+        if (!Array.isArray(files) || files.length <= 0) {
+            console.error("Invalid files data:", files);
+            return res.status(400).json({ 
+                error: "No files uploaded", 
+                receivedFiles: files
+            });
+        }
+
+        for (const file of files) {
+            console.log("Processing file:", file.filename);
+            const { filename, content, mimetype, size } = file;
+            const fileBuffer = Buffer.from(content, 'base64');
+            const fileStoredName = `${Date.now()}_${filename}`;
+
+            // Upload file ke GitHub
+            const githubPath = `uploads/${fileStoredName}`;
+            const githubResponse = await axios.put(
+                `https://api.github.com/repos/oceanite/wa-logger-backend/contents/${githubPath}`,
+                {
+                    message: `Upload file ${fileStoredName}`,
+                    content: fileBuffer.toString('base64'),
+                },
+                {
+                    headers: {
+                        Authorization: `Bearer ghp_${TOKEN_ACCESS}`,
+                    },
+                }
+            );
+            console.log("GitHub API response:", githubResponse.data);
+
+            const githubFilePath = githubResponse.data.content.download_url;
+
+            uploadedFiles.push({
+                filename: filename,
+                storedName: fileStoredName,
+                path: githubFilePath,
+                mimetype: mimetype,
+                size: size,
+                uploadedAt: timestamp,
+                chatroomID: chatroomID,
+                mediaKey: key,
+                fileIndex: index,
+                indexTotal: total
+            });
+            
+            index++;
+        }
+
+        // Simpan metadata ke MongoDB
+        await File.insertMany(uploadedFiles);
+
+        res.status(201).json({
+            success: true,
+            message: 'Files uploaded to repo and metadata processed successfully',
+            data: uploadedFiles,
+        });
+    } catch (error) {
+        console.error('Error uploading and processing file metadata:', error);
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
 });
 
 // Endpoint download file
