@@ -12,11 +12,4 @@
         "dest": "index.js"
       }
     ],
-    "functions": {
-      "api/*.js": {
-        "runtime": "nodejs18.x",
-        "memory": 512,
-        "maxDuration": 10
-      }
-    }
   }
