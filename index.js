@@ -1,6 +1,7 @@
 const express = require("express");
 const cors = require("cors");
 const axios = require('axios');
+const multer = require('multer');
 const connectDB = require('./config/db');
 const Message = require("./models/chat");
 const File = require("./models/media");
@@ -21,29 +22,13 @@ app.use(cors({
 
 app.use(express.json());
 
-app.use((req, res, next) => {
-    if (req.headers['content-type'] === 'application/json') {
-        let data = '';
-        req.on('data', chunk => {
-            data += chunk;
-        });
-        req.on('end', () => {
-            try {
-                req.body = JSON.parse(data);
-            } catch (error) {
-                console.error("Error parsing JSON:", error);
-                return res.status(400).json({ error: "Invalid JSON format" });
-            }
-            next();
-        });
-    } else {
-        next();
-    }
-});
-
 app.listen(port, () => {
     console.log(`Backend menggunakan express di port ${port}`);
 });
+
+// Konfigurasi Multer (untuk menyimpan file sementara di memori)
+const storage = multer.memoryStorage();
+const upload = multer({ storage });
 
 app.get("/api/contacts", async (req, res) => {
     try {
@@ -227,28 +212,21 @@ app.post("/api/send", async (req, res) => {
 });
 
 // Endpoint untuk mengirim metadata file ke MongoDB dan upload data ke repo GitHub
-app.post("/api/send-file", async (req, res) => {
+app.post("/api/send-file", upload.array("files"), async (req, res) => {
     try {
         console.log("Request body:", req.body); // Log request body untuk debug
-        const { chatroomID, timestamp, total, files } = req.body;
+        const { chatroomID, timestamp, total } = req.body;
         const key = `${chatroomID}_${timestamp}`;
         const uploadedFiles = [];
-        let index = 0;
 
         // Validasi file
-        if (!Array.isArray(files) || files.length <= 0) {
-            console.error("Invalid files data:", files);
-            return res.status(400).json({ 
-                error: "No files uploaded", 
-                receivedFiles: files
-            });
+        if (!req.files || req.files.length === 0) {
+            return res.status(400).json({ error: "No files uploaded" });
         }
 
-        for (const file of files) {
-            console.log("Processing file:", file.filename);
-            const { filename, content, mimetype, size } = file;
-            const fileBuffer = Buffer.from(content, 'base64');
-            const fileStoredName = `${Date.now()}_${filename}`;
+        for (const [index, file] of req.files.entries()) {
+            console.log("Processing file:", file.originalname);
+            const fileStoredName = `${Date.now()}_${file.originalname}`;
 
             // Upload file ke GitHub
             const githubPath = `uploads/${fileStoredName}`;
@@ -256,7 +234,7 @@ app.post("/api/send-file", async (req, res) => {
                 `https://api.github.com/repos/oceanite/wa-logger-backend/contents/${githubPath}`,
                 {
                     message: `Upload file ${fileStoredName}`,
-                    content: fileBuffer.toString('base64'),
+                    content: file.buffer.toString('base64'),
                 },
                 {
                     headers: {
@@ -269,19 +247,17 @@ app.post("/api/send-file", async (req, res) => {
             const githubFilePath = githubResponse.data.content.download_url;
 
             uploadedFiles.push({
-                filename: filename,
+                filename: file.originalname,
                 storedName: fileStoredName,
                 path: githubFilePath,
-                mimetype: mimetype,
-                size: size,
+                mimetype: file.mimetype,
+                size: file.size,
                 uploadedAt: timestamp,
                 chatroomID: chatroomID,
                 mediaKey: key,
                 fileIndex: index,
                 indexTotal: total
             });
-            
-            index++;
         }
 
         // Simpan metadata ke MongoDB
